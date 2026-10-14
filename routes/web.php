@@ -10,6 +10,7 @@ use App\Http\Controllers\MasterController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StaffController;
 use App\Models\Role;
+use App\Models\SystemNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -399,6 +400,25 @@ Route::middleware('auth')->group(function () {
 
     Route::put('/admin-permission/{hospital}', [AdminPermissionController::class, 'update'])->name('admin_permission.update');
     Route::post('/admin-permission/{hospital}/toggle', [AdminPermissionController::class, 'toggle'])->name('admin_permission.toggle');
+
+    // Notifications
+    Route::post('/notifications/mark-all-read', function () {
+        if (! Auth::check()) {
+            return response()->json(['success' => false], 401);
+        }
+        SystemNotification::forUser(Auth::user())->update(['is_read' => true]);
+
+        return response()->json(['success' => true]);
+    })->name('notifications.mark_all_read');
+
+    Route::post('/notifications/{notification}/read', function (SystemNotification $notification) {
+        if (! Auth::check()) {
+            return response()->json(['success' => false], 401);
+        }
+        $notification->update(['is_read' => true]);
+
+        return response()->json(['success' => true]);
+    })->name('notifications.read');
 
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

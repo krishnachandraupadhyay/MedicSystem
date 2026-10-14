@@ -838,52 +838,7 @@
 
     <!-- MAIN WRAPPER -->
     <div class="main-wrapper">
-        <header class="topbar">
-            <div>
-                <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-            </div>
-
-            <div class="topbar-actions">
-                <button class="icon-circle-btn" title="Notifications">
-                    <i class="fa-regular fa-bell"></i>
-                    <span class="badge-dot-red"></span>
-                </button>
-
-                <button class="icon-circle-btn" title="Messages">
-                    <i class="fa-regular fa-comment-dots"></i>
-                </button>
-
-                <!-- Profile Badge SA with Dropdown -->
-                <div class="user-dropdown-wrap">
-                    <div class="user-profile-btn" id="userProfileBtn" onclick="toggleProfileDropdown(event)" title="Account Menu">
-                        <div class="user-avatar-circle">
-                            SA
-                        </div>
-                        <i class="fa-solid fa-chevron-down"></i>
-                    </div>
-
-                    <!-- Dropdown Content: Super Admin & Logout -->
-                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
-                        <div class="dropdown-user-header">
-                            <div class="dropdown-avatar-circle">SA</div>
-                            <div class="dropdown-user-details">
-                                <span class="dropdown-role-name">Super Admin</span>
-                                <span class="dropdown-role-sub">{{ Auth::user()->email ?? 'admin@gmail.com' }}</span>
-                            </div>
-                        </div>
-
-                        <div class="dropdown-divider"></div>
-
-                        <button type="button" class="dropdown-item-btn" onclick="triggerLogout()">
-                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                            <span>Logout</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </header>
+        @include('partials.topbar')
 
         <main class="content-area">
             <div class="page-header-row">

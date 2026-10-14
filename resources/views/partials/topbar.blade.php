@@ -4,6 +4,13 @@
     $roleTitle = $authUser->display_role ?? 'Lab Admin';
     $initials = $authUser->initials ?? 'LA';
     $isBM = $authUser->is_branch_manager ?? false;
+
+    // Fetch notifications for the user (Super Admins get all facility alerts)
+    $sysNotifications = \App\Models\SystemNotification::forUser($authUser)
+        ->latest()
+        ->take(10)
+        ->get();
+    $unreadNotifCount = $sysNotifications->where('is_read', false)->count();
 @endphp
 
 <!-- UNIFIED TOPBAR HEADER -->
@@ -15,10 +22,52 @@
     </div>
 
     <div class="topbar-actions">
-        <button class="icon-circle-btn" title="Notifications">
-            <i class="fa-regular fa-bell"></i>
-            <span class="badge-dot-red"></span>
-        </button>
+        <!-- Notification Bell with Dropdown -->
+        <div class="notif-dropdown-wrap" id="notifDropdownWrap" style="position: relative;">
+            <button class="icon-circle-btn" id="notifBtn" onclick="toggleNotifDropdown(event)" title="Notifications ({{ $unreadNotifCount }} unread)">
+                <i class="fa-regular fa-bell"></i>
+                @if($unreadNotifCount > 0)
+                    <span class="badge-dot-red" style="position: absolute; top: 6px; right: 6px; width: 7.5px; height: 7.5px; background-color: #ef4444; border-radius: 50%; border: 1.5px solid #ffffff;"></span>
+                @endif
+            </button>
+
+            <!-- Notifications Dropdown Panel -->
+            <div class="notif-dropdown-menu" id="notifDropdownMenu" style="position: absolute; top: calc(100% + 8px); right: 0; width: 340px; background: #ffffff; border-radius: 14px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.14), 0 8px 10px -6px rgba(0,0,0,0.08); border: 1px solid #f1f5f9; padding: 12px; display: none; z-index: 1000;">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13.5px; font-weight: 800; color: #0f172a;">Notifications</span>
+                        @if($unreadNotifCount > 0)
+                            <span style="background: #ef4444; color: #fff; font-size: 10.5px; font-weight: 800; padding: 1px 7px; border-radius: 10px;">{{ $unreadNotifCount }} New</span>
+                        @endif
+                    </div>
+                    @if($unreadNotifCount > 0)
+                        <button type="button" onclick="markAllNotificationsRead()" style="background: none; border: none; font-size: 11px; font-weight: 700; color: #4f46e5; cursor: pointer;">Mark all read</button>
+                    @endif
+                </div>
+
+                <div class="notif-list-scroll" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+                    @forelse($sysNotifications as $notif)
+                        <div class="notif-item {{ $notif->is_read ? 'read' : 'unread' }}" style="padding: 10px; border-radius: 8px; background: {{ $notif->is_read ? '#ffffff' : '#f0fdf4' }}; border: 1px solid {{ $notif->is_read ? '#f1f5f9' : '#bbf7d0' }}; transition: all 0.15s ease;">
+                            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                <div style="width: 28px; height: 28px; border-radius: 50%; background: {{ str_contains($notif->type, 'verified') ? '#ecfdf5' : '#eef2ff' }}; color: {{ str_contains($notif->type, 'verified') ? '#059669' : '#4f46e5' }}; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; margin-top: 2px;">
+                                    <i class="fa-solid {{ str_contains($notif->type, 'verified') ? 'fa-circle-check' : 'fa-bell' }}"></i>
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">{{ $notif->title }}</div>
+                                    <div style="font-size: 11.5px; color: #475569; line-height: 1.35;">{{ $notif->message }}</div>
+                                    <div style="font-size: 10px; font-weight: 600; color: #94a3b8; margin-top: 4px;">{{ $notif->created_at?->diffForHumans() }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div style="padding: 24px 12px; text-align: center; color: #94a3b8; font-size: 12.5px; font-weight: 600;">
+                            <i class="fa-regular fa-bell-slash" style="font-size: 20px; margin-bottom: 6px; display: block; opacity: 0.5;"></i>
+                            No notifications yet
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
 
         <button class="icon-circle-btn" title="Messages">
             <i class="fa-regular fa-comment-dots"></i>
@@ -186,6 +235,44 @@ if (typeof toggleProfileDropdown !== 'function') {
         }
     };
 }
+function toggleNotifDropdown(e) {
+    if (e) e.stopPropagation();
+    const menu = document.getElementById('notifDropdownMenu');
+    if (!menu) return;
+    const isShown = menu.style.display === 'block';
+    menu.style.display = isShown ? 'none' : 'block';
+
+    // Close profile dropdown if open
+    const pMenu = document.getElementById('profileDropdownMenu');
+    const pWrap = document.getElementById('userDropdownWrap');
+    const pBtn = document.getElementById('userProfileBtn');
+    if (pMenu) pMenu.classList.remove('show');
+    if (pWrap) pWrap.classList.remove('open');
+    if (pBtn) pBtn.classList.remove('active');
+}
+
+function markAllNotificationsRead() {
+    fetch('{{ route("notifications.mark_all_read") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    }).then(res => res.json()).then(data => {
+        if (data.success) {
+            document.querySelectorAll('.notif-item').forEach(el => {
+                el.style.background = '#ffffff';
+                el.style.borderColor = '#f1f5f9';
+            });
+            const badge = document.querySelector('#notifBtn .badge-dot-red');
+            if (badge) badge.remove();
+            const counter = document.querySelector('#notifDropdownMenu span[style*="background: #ef4444"]');
+            if (counter) counter.remove();
+        }
+    }).catch(err => console.error(err));
+}
+
 window.addEventListener('click', function(e) {
     const wrap = document.getElementById('userDropdownWrap');
     const menu = document.getElementById('profileDropdownMenu');
@@ -194,6 +281,12 @@ window.addEventListener('click', function(e) {
         menu.classList.remove('show');
         if (btn) btn.classList.remove('active');
         wrap.classList.remove('open');
+    }
+
+    const notifWrap = document.getElementById('notifDropdownWrap');
+    const notifMenu = document.getElementById('notifDropdownMenu');
+    if (notifMenu && notifWrap && !notifWrap.contains(e.target)) {
+        notifMenu.style.display = 'none';
     }
 });
 </script>

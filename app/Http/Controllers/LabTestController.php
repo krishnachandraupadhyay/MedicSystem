@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\BranchManager;
 use App\Models\Hospital;
 use App\Models\LabTest;
+use App\Models\SystemNotification;
 use App\Models\TestCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -269,6 +270,15 @@ class LabTestController extends Controller
             }
         }
 
+        $facilityName = $hospital?->name ?? 'Laboratory Facility';
+        SystemNotification::notifySuperAdmins(
+            title: $isAdmin ? 'New Test Category Created' : 'New Test Category Submitted',
+            message: "{$category->name} was added by ".Auth::user()->name." ({$facilityName}) with status '{$initialStatus}'.",
+            type: 'category_created',
+            hospitalId: $hospital?->id,
+            data: ['category_id' => $category->id, 'name' => $category->name, 'status' => $initialStatus]
+        );
+
         if (! $isAdmin) {
             return back()->with('success', "Test Category '{$category->name}' submitted! It is pending Laboratory Admin verification before branch activation.");
         }
@@ -414,6 +424,15 @@ class LabTestController extends Controller
                 ]);
             }
         }
+
+        $facilityName = $hospital?->name ?? 'Laboratory Facility';
+        SystemNotification::notifySuperAdmins(
+            title: $isAdmin ? 'New Lab Test Added' : 'New Lab Test Submitted',
+            message: "Test '{$test->name}' (Fee: ₹{$price}) was added by ".Auth::user()->name." ({$facilityName}) with status '{$initialStatus}'.",
+            type: 'test_created',
+            hospitalId: $hospital?->id,
+            data: ['test_id' => $test->id, 'name' => $test->name, 'price' => $price, 'status' => $initialStatus]
+        );
 
         if (! $isAdmin) {
             return back()->with('success', "Test '{$test->name}' created with fee ₹{$price}! It is pending Laboratory Admin verification and will appear in your branch once approved.");
@@ -814,6 +833,21 @@ class LabTestController extends Controller
         $labTest->update(['status' => 'Active']);
 
         $branchName = $labTest->branch?->name ?? 'All Branches';
+        $facilityName = $hospital?->name ?? 'Laboratory Facility';
+
+        // Notify Super Admin continuously about Laboratory Admin verifications
+        SystemNotification::notifySuperAdmins(
+            title: 'Lab Test Verified & Approved',
+            message: "{$user->name} ({$facilityName}) verified & approved lab test '{$labTest->name}' (Code: {$labTest->code}) for {$branchName}.",
+            type: 'test_verified',
+            hospitalId: $hospital?->id,
+            data: [
+                'test_id' => $labTest->id,
+                'test_name' => $labTest->name,
+                'branch' => $branchName,
+                'verified_by' => $user->name,
+            ]
+        );
 
         return back()->with('success', "Test '{$labTest->name}' has been verified & approved! It is now active in {$branchName}.");
     }
@@ -834,6 +868,20 @@ class LabTestController extends Controller
         }
 
         $category->update(['status' => 'Active']);
+        $facilityName = $hospital?->name ?? 'Laboratory Facility';
+
+        // Notify Super Admin continuously about Laboratory Admin verifications
+        SystemNotification::notifySuperAdmins(
+            title: 'Test Category Verified & Approved',
+            message: "{$user->name} ({$facilityName}) verified & approved test category '{$category->name}'.",
+            type: 'category_verified',
+            hospitalId: $hospital?->id,
+            data: [
+                'category_id' => $category->id,
+                'category_name' => $category->name,
+                'verified_by' => $user->name,
+            ]
+        );
 
         return back()->with('success', "Category '{$category->name}' has been verified & approved!");
     }
