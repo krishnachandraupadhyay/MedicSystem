@@ -1125,7 +1125,7 @@
                                         @endif
                                     </td>
                                     <td style="text-align: right; white-space: nowrap;">
-                                        @if($test->status === 'Pending Verification' && in_array(Auth::user()->role, ['Super Admin', 'Laboratory Admin', 'Admin']))
+                                        @if($test->status === 'Pending Verification' && (Auth::user()->is_admin || in_array(Auth::user()->role, ['Super Admin', 'Laboratory Admin', 'Admin'])))
                                             <form action="{{ url($rSlug . '/tests/' . $test->id . '/verify') }}" method="POST" style="display:inline;" onsubmit="return confirm('Verify & approve test {{ $test->name }} for branch publication?')">
                                                 @csrf
                                                 <button type="submit" class="btn-icon-action" title="Verify &amp; Approve Test for Branch" style="color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0;">

@@ -620,7 +620,7 @@
                                     </td>
                                     <td>
                                         <div class="action-btns" style="justify-content: flex-end; white-space: nowrap;">
-                                            @if($cat->status === 'Pending Verification' && in_array(Auth::user()->role, ['Super Admin', 'Laboratory Admin', 'Admin']))
+                                            @if($cat->status === 'Pending Verification' && (Auth::user()->is_admin || in_array(Auth::user()->role, ['Super Admin', 'Laboratory Admin', 'Admin'])))
                                                 <form action="{{ url($rSlug . '/test-categories/' . $cat->id . '/verify') }}" method="POST" style="display:inline;" onsubmit="return confirm('Verify & approve category {{ $cat->name }}?')">
                                                     @csrf
                                                     <button type="submit" class="btn-action-icon" title="Verify &amp; Approve Category" style="color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0;">

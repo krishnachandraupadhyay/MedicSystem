@@ -73,7 +73,7 @@
             @endif
 
             <!-- Branch Management (Administrative Only) -->
-            @if(in_array($user->role ?? '', ['Super Admin', 'Laboratory Admin', 'Admin']) && (($hospitalModel && $hospitalModel->enable_multi_branch) || $user->canAccessModule('branches')))
+            @if((($user->is_admin ?? false) || in_array($user->role ?? '', ['Super Admin', 'Laboratory Admin', 'Admin'])) && (($hospitalModel && $hospitalModel->enable_multi_branch) || $user->canAccessModule('branches')))
                 <div class="menu-heading">BRANCH MANAGEMENT</div>
                 <li>
                     <a href="{{ url($rSlug . '/branches') }}" class="nav-link {{ (request()->is('*branches*') && !request()->is('*branch-managers*')) ? 'active' : '' }}">
@@ -90,7 +90,7 @@
             @endif
 
             <!-- Roles & Access (Administrative Only) -->
-            @if(in_array($user->role ?? '', ['Super Admin', 'Laboratory Admin', 'Admin']))
+            @if(($user->is_admin ?? false) || in_array($user->role ?? '', ['Super Admin', 'Laboratory Admin', 'Admin']))
                 <div class="menu-heading">ROLES & ACCESS</div>
                 <li>
                     <a href="{{ url($rSlug . '/roles') }}" class="nav-link {{ (request()->is('*roles*') && !request()->is('*permissions*')) ? 'active' : '' }}">
