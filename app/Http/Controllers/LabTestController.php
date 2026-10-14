@@ -82,7 +82,7 @@ class LabTestController extends Controller
             $categoriesQuery->where(function ($q) use ($userBranchId) {
                 $q->where('branch_id', $userBranchId)
                     ->orWhereNull('branch_id'); // Global within THIS facility
-            })->where('status', 'Active');
+            });
         } elseif ($selectedBranchId !== null && $selectedBranchId !== '') {
             $categoriesQuery->where(function ($q) use ($selectedBranchId) {
                 $q->where('branch_id', $selectedBranchId)
@@ -95,6 +95,9 @@ class LabTestController extends Controller
                     ->orWhere('code', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
             });
+        }
+        if ($request->filled('status')) {
+            $categoriesQuery->where('status', $request->query('status'));
         }
 
         $categories = $categoriesQuery->orderBy('name')->get();
@@ -168,7 +171,7 @@ class LabTestController extends Controller
             $testsQuery->where(function ($q) use ($userBranchId) {
                 $q->where('branch_id', $userBranchId)
                     ->orWhereNull('branch_id');
-            })->where('status', 'Active');
+            });
         } elseif ($selectedBranchId !== null && $selectedBranchId !== '') {
             $testsQuery->where(function ($q) use ($selectedBranchId) {
                 $q->where('branch_id', $selectedBranchId)
@@ -185,6 +188,9 @@ class LabTestController extends Controller
                     ->orWhere('sample_type', 'like', "%{$search}%")
                     ->orWhere('turnaround_time', 'like', "%{$search}%");
             });
+        }
+        if ($request->filled('status')) {
+            $testsQuery->where('status', $request->query('status'));
         }
 
         $tests = $testsQuery->orderBy('name')->get();

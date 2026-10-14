@@ -1022,7 +1022,15 @@
                         @endforeach
                     </select>
 
-                    @if((!Auth::user()->is_branch_manager && $selectedBranchId) || $selectedCategoryId || $search)
+                    <!-- Filter by Status -->
+                    <select name="status" class="filter-select" onchange="this.form.submit()">
+                        <option value="">⚡ All Statuses</option>
+                        <option value="Active" {{ request('status') == 'Active' ? 'selected' : '' }}>Active</option>
+                        <option value="Pending Verification" {{ request('status') == 'Pending Verification' ? 'selected' : '' }}>Pending Verification</option>
+                        <option value="Inactive" {{ request('status') == 'Inactive' ? 'selected' : '' }}>Inactive</option>
+                    </select>
+
+                    @if((!Auth::user()->is_branch_manager && $selectedBranchId) || $selectedCategoryId || $search || request('status'))
                         <a href="{{ url($rSlug . '/tests') }}" style="font-size: 13px; color: #ef4444; font-weight: 700; text-decoration: none; padding: 6px 10px;">
                             <i class="fa-solid fa-xmark"></i> Reset Filters
                         </a>

@@ -534,12 +534,18 @@
                             @endforeach
                         </select>
                     @endif
+                    <select name="status" class="select-filter" onchange="this.form.submit()">
+                        <option value="">⚡ All Statuses</option>
+                        <option value="Active" {{ request('status') == 'Active' ? 'selected' : '' }}>Active</option>
+                        <option value="Pending Verification" {{ request('status') == 'Pending Verification' ? 'selected' : '' }}>Pending Verification</option>
+                        <option value="Inactive" {{ request('status') == 'Inactive' ? 'selected' : '' }}>Inactive</option>
+                    </select>
                 </div>
                 <div>
                     <button type="submit" class="btn-secondary-link" style="padding: 9px 16px;">
                         <i class="fa-solid fa-filter"></i> Apply Filter
                     </button>
-                    @if(request('search') || (!Auth::user()->is_branch_manager && request('branch_id')))
+                    @if(request('search') || (!Auth::user()->is_branch_manager && request('branch_id')) || request('status'))
                         <a href="{{ url($rSlug . '/test-categories') }}" class="btn-secondary-link" style="padding: 9px 14px; color: #ef4444;">
                             <i class="fa-solid fa-rotate-left"></i> Reset
                         </a>
